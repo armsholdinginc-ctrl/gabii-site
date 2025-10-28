@@ -47,7 +47,7 @@ jobs:
           projects=$(jq -r '.hosting[].target // empty' firebase.json)
           if [ -z "$projects" ]; then
             echo "No hosting projects found in firebase.json. Deploying default project."
-            firebase deploy --project gabii-hisevgh-suckr --only hosting
+            firebase deploy --project secu-veri-gabbiii-001 --only hosting
           else
             for project in $projects; do
               echo "Deploying project: $project"
