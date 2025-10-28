@@ -3,28 +3,54 @@ name: Deploy to Firebase Hosting
 on:
   push:
     branches:
-      - main  # change to your default branch if it's not "main"
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
+      # Step 1: Checkout repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Step 2: Setup Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
+      # Step 3: Install dependencies
+      - name: Install Dependencies
+        run: npm ci
+
+      # Step 4: Build project (optional)
+      - name: Build Project
+        run: |
+          if [ -f package.json ]; then
+            npm run build || echo "No build script found, skipping."
+          fi
+
+      # Step 5: Install Firebase CLI
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: Write Firebase service account to file
+      # Step 6: Write Firebase service account JSON
+      - name: Write Firebase Service Account
         run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > $HOME/firebase-key.json
 
+      # Step 7: Deploy to Firebase Hosting
       - name: Deploy to Firebase
         env:
           GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-key.json
-        run: firebase deploy --project gabii-hisevgh-suckr --only hosting
+        run: |
+          # Read all projects from firebase.json
+          projects=$(jq -r '.hosting[].target // empty' firebase.json)
+          if [ -z "$projects" ]; then
+            echo "No hosting projects found in firebase.json. Deploying default project."
+            firebase deploy --project gabii-hisevgh-suckr --only hosting
+          else
+            for project in $projects; do
+              echo "Deploying project: $project"
+              firebase deploy --only hosting:$project
+            done
+          fi
