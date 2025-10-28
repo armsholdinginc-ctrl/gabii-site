@@ -1,28 +1,39 @@
-name: Deploy to Firebase Hosting
+name: Firebase Hosting CI/CD
 
 on:
   push:
     branches:
-      - main  # Deploy only when pushing to main branch
+      - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Install Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'  # Or use 18/16 based on your needs
+      # Step 2: Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'  # Adjust if your project requires a different version
 
-    - name: Install Firebase CLI
-      run: npm install -g firebase-tools
+      # Step 3: Install project dependencies
+      - name: Install Dependencies
+        run: npm ci  # npm ci is faster and safer for CI environments
 
-    - name: Deploy to Firebase
-      env:
-        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-      run: |
-        firebase deploy --only hosting
+      # Step 4: Build the project
+      - name: Build Project
+        run: npm run build  # Make sure your package.json has a build script
+
+      # Step 5: Install Firebase CLI
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      # Step 6: Deploy to Firebase Hosting
+      - name: Deploy to Firebase Hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: firebase deploy --only hosting --project armsholdinginc-ctrlmain
